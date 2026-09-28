@@ -1,0 +1,10 @@
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+
+# TEMP: NestJS 12.1.1 / oxlint 1.86.0 were published < 24h ago. Remove after 2026-09-29.
+minimumReleaseAgeExclude:
+  - '@nestjs/*'
+  - '@oxlint/*'
+  - oxlint

@@ -1,0 +1,24 @@
+name: cardql
+
+services:
+  db:
+    image: cockroachdb/cockroach:v26.2.7
+    container_name: cardql-db
+    command: start-single-node --insecure --store=path=/cockroach/cockroach-data
+    environment:
+      COCKROACH_DATABASE: ${DB_NAME:-cardql}
+    ports:
+      - "${DB_PORT:-26257}:26257" # SQL
+      - "${DB_UI_PORT:-8080}:8080" # Web UI
+    volumes:
+      - db-data:/cockroach/cockroach-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  db-data:
