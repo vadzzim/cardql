@@ -4,6 +4,9 @@
 pnpm install
 cp .env.example .env
 docker compose up -d db
+pnpm db:deploy
+pnpm prisma:generate
+pnpm db:seed
 ```
 
 CockroachDB UI: http://localhost:8080
@@ -12,24 +15,36 @@ CockroachDB UI: http://localhost:8080
 
 ```bash
 # development
-$ pnpm run start
+pnpm run start
 
 # watch mode
-$ pnpm run start:dev
+pnpm run start:dev
 
 # production mode
-$ pnpm run start:prod
+pnpm run start:prod
 ```
 
 ## Run tests
 
 ```bash
 # unit tests
-$ pnpm run test
+pnpm run test
 
 # e2e tests
-$ pnpm run test:e2e
+pnpm run test:e2e
 
 # test coverage
-$ pnpm run test:cov
+pnpm run test:cov
 ```
+
+## Database
+
+| Command | Purpose |
+|---|---|
+| `pnpm db:migrate` | Create and apply a new migration after changing `schema.prisma` |
+| `pnpm db:deploy` | Apply existing migrations (fresh setup, CI, Docker) |
+| `pnpm db:seed` | Fill the database with profile data (safe to re-run) |
+| `pnpm db:studio` | Browse data in Prisma Studio |
+| `docker compose down -v` | Stop CockroachDB and drop its data volume |
+
+To start over: `pnpm exec prisma migrate reset`, then `pnpm db:seed` (Prisma 7 no longer seeds on reset).
