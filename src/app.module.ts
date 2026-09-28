@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { type Env, validateEnv } from './config/env.schema.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { ProfileModule } from './profile/profile.module.js';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
       }),
     }),
     PrismaModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}
