@@ -42,6 +42,7 @@
     "@types/node": "^24.19.0",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^4.1.11",
+    "dotenv": "^18.0.4",
     "oxlint": "^1.86.0",
     "prettier": "^3.9.9",
     "prisma": "^7.10.0",
