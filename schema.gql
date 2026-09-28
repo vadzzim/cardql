@@ -1,0 +1,18 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Profile {
+  description: String!
+  email: String
+  headline: String!
+  id: ID!
+  location: String
+  name: String!
+  slug: String!
+}
+
+type Query {
+  """Returns the profile by slug, or the main profile when omitted"""
+  profile(slug: String): Profile!
+}
