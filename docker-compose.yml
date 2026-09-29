@@ -1,6 +1,18 @@
 name: cardql
 
 services:
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://root@db:26257/${DB_NAME:-cardql}?sslmode=disable
+    ports:
+      - "${PORT:-3000}:3000"
+
   db:
     image: cockroachdb/cockroach:v26.2.7
     container_name: cardql-db

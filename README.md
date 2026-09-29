@@ -1,4 +1,42 @@
-## Project setup
+## Run with Docker
+
+With Docker running, start the entire application:
+
+```bash
+docker compose up --build
+```
+
+No local Node.js, pnpm, or `.env` file is required. Compose waits for the database
+healthcheck, then the application applies migrations, seeds the profile, and starts
+NestJS. If migrations or seed fail, the application does not start.
+
+- Apollo Sandbox: http://localhost:3000/graphql
+- CockroachDB UI: http://localhost:8080
+
+Try this query in Sandbox:
+
+```graphql
+query {
+  profile {
+    name
+    headline
+    description
+  }
+}
+```
+
+Edit `prisma/seed-data/profile.ts` and run `docker compose up --build` again to
+update the profile. Seed runs on every application container start and updates
+the profile by slug without duplicating it.
+
+Use `docker compose down` to stop and remove the containers; database data stays
+in a volume. To change the host ports, copy `.env.example` to `.env` and adjust
+`PORT`, `DB_PORT`, or `DB_UI_PORT`. Inside Docker, the app always connects to `db:26257`.
+
+## Local development
+
+Stop the Docker application first if it is running (`docker compose stop app`),
+so the HTTP port is available for the local NestJS process.
 
 ```bash
 pnpm install
@@ -47,6 +85,6 @@ E2E tests need CockroachDB running (`docker compose up -d db`). They use a separ
 | `pnpm db:deploy` | Apply existing migrations (fresh setup, CI, Docker) |
 | `pnpm db:seed` | Fill the database with profile data (safe to re-run) |
 | `pnpm db:studio` | Browse data in Prisma Studio |
-| `docker compose down -v` | Stop CockroachDB and drop its data volume |
+| `docker compose down -v` | Stop and remove the app and database containers, network, and database data volume |
 
 To start over: `pnpm exec prisma migrate reset`, then `pnpm db:seed` (Prisma 7 no longer seeds on reset).

@@ -1,0 +1,13 @@
+node_modules
+dist
+src/generated
+*.tsbuildinfo
+.git
+.env*
+!.env.example
+coverage
+*.log
+.claude
+.codex
+.idea
+.vscode
