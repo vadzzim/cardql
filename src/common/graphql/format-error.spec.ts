@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { GraphQLError, type GraphQLFormattedError } from 'graphql';
+import { describe, expect, it } from 'vitest';
 import { createFormatError } from './format-error.js';
 
 // Apollo passes resolver errors wrapped in a GraphQLError with a path.

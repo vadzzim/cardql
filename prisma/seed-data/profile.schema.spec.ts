@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { profile } from './profile.js';
 import { validateSeedProfile } from './profile.schema.js';
 

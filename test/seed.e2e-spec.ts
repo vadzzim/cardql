@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { seedProfile } from '../prisma/seed-profile.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';

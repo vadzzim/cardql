@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      # Same as .env.example; e2e tests derive the cardql_test database from it.
+      DATABASE_URL: postgresql://root@localhost:26257/cardql?sslmode=disable
+    steps:
+      - uses: actions/checkout@v7
+      # Reads the pnpm version from packageManager in package.json.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Generates the Prisma client, then format, lint, typecheck and unit tests.
+      - run: pnpm check
+      # Reuses the image, command and healthcheck from docker-compose.yml.
+      - run: docker compose up -d --wait db
+      - run: pnpm test:e2e
+      - run: pnpm build
