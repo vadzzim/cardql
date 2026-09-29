@@ -21,13 +21,18 @@ query {
     name
     headline
     description
+    links {
+      label
+      url
+    }
   }
 }
 ```
 
 Edit `prisma/seed-data/profile.ts` and run `docker compose up --build` again to
-update the profile. Seed runs on every application container start and updates
-the profile by slug without duplicating it.
+update the profile and its links. Seed runs on every application container start:
+it updates the profile by slug without duplicating it and replaces its links, so
+links follow the order of the `links` array.
 
 Use `docker compose down` to stop and remove the containers; database data stays
 in a volume. To change the host ports, copy `.env.example` to `.env` and adjust
@@ -83,7 +88,7 @@ E2E tests need CockroachDB running (`docker compose up -d db`). They use a separ
 |---|---|
 | `pnpm db:migrate` | Create and apply a new migration after changing `schema.prisma` |
 | `pnpm db:deploy` | Apply existing migrations (fresh setup, CI, Docker) |
-| `pnpm db:seed` | Fill the database with profile data (safe to re-run) |
+| `pnpm db:seed` | Fill the database with profile data and links (safe to re-run) |
 | `pnpm db:studio` | Browse data in Prisma Studio |
 | `docker compose down -v` | Stop and remove the app and database containers, network, and database data volume |
 

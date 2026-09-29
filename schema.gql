@@ -2,11 +2,20 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Link {
+  id: ID!
+  label: String!
+  url: String!
+}
+
 type Profile {
   description: String!
   email: String
   headline: String!
   id: ID!
+
+  """Profile links in display order"""
+  links: [Link!]!
   location: String
   name: String!
   slug: String!

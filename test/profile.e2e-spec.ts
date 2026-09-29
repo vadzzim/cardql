@@ -14,6 +14,12 @@ const profile = {
   email: 'e2e@example.com',
 };
 
+// Inserted out of order to check that the API sorts by position.
+const links = [
+  { label: 'Second', url: 'https://example.com/second', position: 1 },
+  { label: 'First', url: 'https://example.com/first', position: 0 },
+];
+
 describe('Profile (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -31,9 +37,12 @@ describe('Profile (e2e)', () => {
     prisma = app.get(PrismaService);
   });
 
+  // Links are removed with their profile by the ON DELETE CASCADE foreign key.
   beforeEach(async () => {
     await prisma.profile.deleteMany();
-    await prisma.profile.create({ data: profile });
+    await prisma.profile.create({
+      data: { ...profile, links: { create: links } },
+    });
   });
 
   afterAll(async () => {
@@ -63,6 +72,33 @@ describe('Profile (e2e)', () => {
     });
   });
 
+  it('returns links in display order', async () => {
+    const response = await graphql('{ profile { links { id label url } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.links).toEqual([
+      {
+        id: expect.any(String),
+        label: 'First',
+        url: 'https://example.com/first',
+      },
+      {
+        id: expect.any(String),
+        label: 'Second',
+        url: 'https://example.com/second',
+      },
+    ]);
+  });
+
+  it('returns an empty list when the profile has no links', async () => {
+    await prisma.link.deleteMany();
+
+    const response = await graphql('{ profile { links { label } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.links).toEqual([]);
+  });
+
   it('returns NOT_FOUND when the database is not seeded', async () => {
     await prisma.profile.deleteMany();
 
@@ -81,7 +117,7 @@ describe('Profile (e2e)', () => {
   });
 
   it('rejects fields missing from the schema', async () => {
-    const response = await graphql('{ profile { links } }');
+    const response = await graphql('{ profile { notARealField } }');
 
     expect(response.body.errors[0].extensions.code).toBe(
       'GRAPHQL_VALIDATION_FAILED',

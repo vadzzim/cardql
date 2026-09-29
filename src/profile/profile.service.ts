@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Profile } from '../generated/prisma/client.js';
+import type { Link, Profile } from '../generated/prisma/client.js';
 import { MAIN_PROFILE_SLUG } from './profile.constants.js';
 import { ProfileRepository } from './profile.repository.js';
 
@@ -15,5 +15,9 @@ export class ProfileService {
     }
 
     return profile;
+  }
+
+  getLinks(profileId: string): Promise<Link[]> {
+    return this.profiles.findLinks(profileId);
   }
 }

@@ -11,18 +11,28 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: DATABASE_URL }),
 });
 
-// Idempotent: runs on every container start. The profile is upserted by slug,
-// so edits in seed-data are applied on the next run without duplicating rows.
+// Idempotent: runs on every container start. The profile is upserted by slug
+// and its links are replaced as a whole, so edits in seed-data (including
+// removed or reordered links) are applied on the next run without duplicates.
 async function main(): Promise<void> {
+  const { links, ...data } = profile;
+
   await prisma.$transaction(async (tx) => {
-    await tx.profile.upsert({
+    const { id: profileId } = await tx.profile.upsert({
       where: { slug: MAIN_PROFILE_SLUG },
-      create: { ...profile, slug: MAIN_PROFILE_SLUG },
-      update: profile,
+      create: { ...data, slug: MAIN_PROFILE_SLUG },
+      update: data,
+    });
+
+    await tx.link.deleteMany({ where: { profileId } });
+    await tx.link.createMany({
+      data: links.map((link, position) => ({ ...link, profileId, position })),
     });
   });
 
-  console.log(`Seeded profile "${MAIN_PROFILE_SLUG}"`);
+  console.log(
+    `Seeded profile "${MAIN_PROFILE_SLUG}" with ${links.length} link(s)`,
+  );
 }
 
 main()
