@@ -14,6 +14,7 @@ const profile = {
     { label: 'GitHub', url: 'https://github.com/seed' },
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/seed' },
   ],
+  skills: [{ name: 'TypeScript' }, { name: 'NestJS' }],
 };
 
 describe('seedProfile (e2e)', () => {
@@ -23,11 +24,17 @@ describe('seedProfile (e2e)', () => {
 
   const readProfiles = () =>
     prisma.profile.findMany({
-      include: { links: { orderBy: { position: 'asc' } } },
+      include: {
+        links: { orderBy: { position: 'asc' } },
+        skills: { orderBy: { position: 'asc' } },
+      },
     });
 
   const linksOf = (seeded: Awaited<ReturnType<typeof readProfiles>>[number]) =>
     seeded.links.map(({ label, url, position }) => ({ label, url, position }));
+
+  const skillsOf = (seeded: Awaited<ReturnType<typeof readProfiles>>[number]) =>
+    seeded.skills.map(({ name, position }) => ({ name, position }));
 
   beforeEach(async () => {
     await prisma.profile.deleteMany();
@@ -37,7 +44,7 @@ describe('seedProfile (e2e)', () => {
     await prisma.$disconnect();
   });
 
-  it('creates the main profile with links in array order', async () => {
+  it('creates the main profile with links and skills in array order', async () => {
     await seedProfile(prisma, profile);
 
     const [seeded, ...rest] = await readProfiles();
@@ -54,6 +61,10 @@ describe('seedProfile (e2e)', () => {
         url: 'https://www.linkedin.com/in/seed',
         position: 1,
       },
+    ]);
+    expect(skillsOf(seeded)).toEqual([
+      { name: 'TypeScript', position: 0 },
+      { name: 'NestJS', position: 1 },
     ]);
   });
 
@@ -76,6 +87,23 @@ describe('seedProfile (e2e)', () => {
     expect(await prisma.link.count()).toBe(2);
   });
 
+  it('replaces skills on a repeated run', async () => {
+    await seedProfile(prisma, profile);
+    await seedProfile(prisma, {
+      ...profile,
+      skills: [{ name: 'Docker' }, { name: 'TypeScript' }, { name: 'Prisma' }],
+    });
+
+    const [seeded, ...rest] = await readProfiles();
+    expect(rest).toEqual([]);
+    expect(skillsOf(seeded)).toEqual([
+      { name: 'Docker', position: 0 },
+      { name: 'TypeScript', position: 1 },
+      { name: 'Prisma', position: 2 },
+    ]);
+    expect(await prisma.skill.count()).toBe(3);
+  });
+
   it('clears optional fields removed from seed data', async () => {
     await seedProfile(prisma, profile);
     const { location: _location, email: _email, ...rest } = profile;
@@ -87,7 +115,7 @@ describe('seedProfile (e2e)', () => {
 
   it('removes profiles other than the main one', async () => {
     await prisma.profile.create({
-      data: { ...profile, slug: 'stale', links: undefined },
+      data: { ...profile, slug: 'stale', links: undefined, skills: undefined },
     });
 
     await seedProfile(prisma, profile);

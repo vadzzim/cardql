@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   await seedProfile(prisma, profile);
 
   console.log(
-    `Seeded profile "${MAIN_PROFILE_SLUG}" with ${profile.links.length} link(s)`,
+    `Seeded profile "${MAIN_PROFILE_SLUG}" with ${profile.links.length} link(s) and ${profile.skills.length} skill(s)`,
   );
 }
 

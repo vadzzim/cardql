@@ -21,6 +21,7 @@ model Profile {
   location    String?
   email       String?
   links       Link[]
+  skills      Skill[]
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -40,4 +41,18 @@ model Link {
 
   @@unique([profileId, position])
   @@map("links")
+}
+
+model Skill {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  // Display order within the profile, starting from 0.
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([profileId, position])
+  @@map("skills")
 }

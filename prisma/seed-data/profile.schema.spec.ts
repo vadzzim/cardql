@@ -47,6 +47,12 @@ describe('validateSeedProfile', () => {
         ],
       },
     ],
+    ['an unknown skill field', { skills: [{ name: 'Go', level: 5 }] }],
+    ['a skill with a blank name', { skills: [{ name: '  ' }] }],
+    [
+      'duplicate skill names ignoring case',
+      { skills: [{ name: 'TypeScript' }, { name: 'typescript' }] },
+    ],
   ])('rejects %s', (_case, override) => {
     expect(() => validateSeedProfile({ ...profile, ...override })).toThrow(
       /Invalid seed profile/,

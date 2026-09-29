@@ -11,4 +11,14 @@ export const profile = {
     { label: 'GitHub', url: 'https://github.com/your-username' },
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/your-username' },
   ],
+  skills: [
+    { name: 'TypeScript' },
+    { name: 'Node.js' },
+    { name: 'NestJS' },
+    { name: 'GraphQL' },
+    { name: 'Prisma' },
+    { name: 'CockroachDB' },
+    { name: 'Docker' },
+    { name: 'Git' },
+  ],
 } satisfies SeedProfile;

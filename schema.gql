@@ -18,10 +18,18 @@ type Profile {
   links: [Link!]!
   location: String
   name: String!
+
+  """Profile skills in display order"""
+  skills: [Skill!]!
   slug: String!
 }
 
 type Query {
   """Returns the card owner profile"""
   profile: Profile!
+}
+
+type Skill {
+  id: ID!
+  name: String!
 }

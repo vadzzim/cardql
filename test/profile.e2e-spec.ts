@@ -20,6 +20,11 @@ const links = [
   { label: 'First', url: 'https://example.com/first', position: 0 },
 ];
 
+const skills = [
+  { name: 'GraphQL', position: 1 },
+  { name: 'TypeScript', position: 0 },
+];
+
 describe('Profile (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -37,11 +42,16 @@ describe('Profile (e2e)', () => {
     prisma = app.get(PrismaService);
   });
 
-  // Links are removed with their profile by the ON DELETE CASCADE foreign key.
+  // Links and skills are removed with their profile by the ON DELETE CASCADE
+  // foreign keys.
   beforeEach(async () => {
     await prisma.profile.deleteMany();
     await prisma.profile.create({
-      data: { ...profile, links: { create: links } },
+      data: {
+        ...profile,
+        links: { create: links },
+        skills: { create: skills },
+      },
     });
   });
 
@@ -97,6 +107,25 @@ describe('Profile (e2e)', () => {
 
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.profile.links).toEqual([]);
+  });
+
+  it('returns skills in display order', async () => {
+    const response = await graphql('{ profile { skills { id name } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.skills).toEqual([
+      { id: expect.any(String), name: 'TypeScript' },
+      { id: expect.any(String), name: 'GraphQL' },
+    ]);
+  });
+
+  it('returns an empty list when the profile has no skills', async () => {
+    await prisma.skill.deleteMany();
+
+    const response = await graphql('{ profile { skills { name } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.skills).toEqual([]);
   });
 
   it('returns NOT_FOUND when the database is not seeded', async () => {
