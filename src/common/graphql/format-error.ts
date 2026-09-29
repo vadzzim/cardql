@@ -12,8 +12,9 @@ const CODE_BY_STATUS: Partial<Record<HttpStatus, string>> = {
 
 /**
  * Maps Nest HTTP exceptions thrown by services to GraphQL error codes, so
- * services stay transport-agnostic. In production, messages of unexpected
- * errors are hidden: they may contain SQL or other internals.
+ * services throw Nest's standard exceptions and know nothing about GraphQL.
+ * In production, messages of unexpected errors are hidden: they may contain
+ * SQL or other internals.
  */
 export function createFormatError(isProduction: boolean) {
   return (

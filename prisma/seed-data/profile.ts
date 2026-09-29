@@ -1,10 +1,4 @@
-import type { Prisma } from '../../src/generated/prisma/client.js';
-
-type SeedLink = Omit<Prisma.LinkCreateManyInput, 'profileId' | 'position'>;
-
-export type SeedProfile = Omit<Prisma.ProfileCreateInput, 'slug' | 'links'> & {
-  links: SeedLink[];
-};
+import type { SeedProfile } from './profile.schema.js';
 
 export const profile = {
   name: 'Your Name',

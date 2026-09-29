@@ -31,8 +31,9 @@ query {
 
 Edit `prisma/seed-data/profile.ts` and run `docker compose up --build` again to
 update the profile and its links. Seed runs on every application container start:
-it updates the profile by slug without duplicating it and replaces its links, so
-links follow the order of the `links` array.
+it deletes the existing profile with its links and creates it again from
+`seed-data`, so the database always matches the file and links follow the order
+of the `links` array. Profile and link ids change on every run.
 
 Use `docker compose down` to stop and remove the containers; database data stays
 in a volume. To change the host ports, copy `.env.example` to `.env` and adjust
