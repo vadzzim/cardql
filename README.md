@@ -37,6 +37,8 @@ pnpm run test:e2e
 pnpm run test:cov
 ```
 
+E2E tests need CockroachDB running (`docker compose up -d db`). They use a separate `cardql_test` database on the same server: it is created and migrated automatically before the run, so development data is never touched.
+
 ## Database
 
 | Command | Purpose |
