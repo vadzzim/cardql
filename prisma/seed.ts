@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { validateEnv } from '../src/config/env.schema.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
 import { profile } from './seed-data/profile.js';
 
 const { DATABASE_URL } = validateEnv(process.env);
@@ -15,13 +16,13 @@ const prisma = new PrismaClient({
 async function main(): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await tx.profile.upsert({
-      where: { slug: profile.slug },
-      create: profile,
+      where: { slug: MAIN_PROFILE_SLUG },
+      create: { ...profile, slug: MAIN_PROFILE_SLUG },
       update: profile,
     });
   });
 
-  console.log(`Seeded profile "${profile.slug}"`);
+  console.log(`Seeded profile "${MAIN_PROFILE_SLUG}"`);
 }
 
 main()

@@ -13,10 +13,7 @@ function testDatabaseUrl(): string {
   return url.toString();
 }
 
-export const E2E_PROFILE_SLUG = 'e2e';
-
 export const testEnv = {
   NODE_ENV: 'test',
   DATABASE_URL: testDatabaseUrl(),
-  PROFILE_SLUG: E2E_PROFILE_SLUG,
 };

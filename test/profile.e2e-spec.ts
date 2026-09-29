@@ -3,10 +3,10 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { E2E_PROFILE_SLUG } from './utils/test-env.js';
+import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
 
 const profile = {
-  slug: E2E_PROFILE_SLUG,
+  slug: MAIN_PROFILE_SLUG,
   name: 'E2E User',
   headline: 'Test Engineer',
   description: 'Profile created by the e2e test',
@@ -16,9 +16,10 @@ const profile = {
 
 describe('Profile (e2e)', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
 
-  const graphql = (query: string, variables?: Record<string, unknown>) =>
-    request(app.getHttpServer()).post('/graphql').send({ query, variables });
+  const graphql = (query: string) =>
+    request(app.getHttpServer()).post('/graphql').send({ query });
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -27,8 +28,10 @@ describe('Profile (e2e)', () => {
 
     app = moduleRef.createNestApplication();
     await app.init();
+    prisma = app.get(PrismaService);
+  });
 
-    const prisma = app.get(PrismaService);
+  beforeEach(async () => {
     await prisma.profile.deleteMany();
     await prisma.profile.create({ data: profile });
   });
@@ -37,35 +40,22 @@ describe('Profile (e2e)', () => {
     await app.close();
   });
 
-  it('returns the main profile when no slug is given', async () => {
-    const response = await graphql('{ profile { name description } }');
+  it('returns the main profile with all fields', async () => {
+    const response = await graphql(`
+      {
+        profile {
+          id
+          slug
+          name
+          headline
+          description
+          location
+          email
+        }
+      }
+    `);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      data: {
-        profile: { name: profile.name, description: profile.description },
-      },
-    });
-  });
-
-  it('returns a profile by slug with all fields', async () => {
-    const response = await graphql(
-      `
-        query ($slug: String) {
-          profile(slug: $slug) {
-            id
-            slug
-            name
-            headline
-            description
-            location
-            email
-          }
-        }
-      `,
-      { slug: profile.slug },
-    );
-
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.profile).toEqual({
       id: expect.any(String),
@@ -73,14 +63,21 @@ describe('Profile (e2e)', () => {
     });
   });
 
-  it('returns NOT_FOUND for an unknown slug', async () => {
-    const response = await graphql(
-      'query ($slug: String) { profile(slug: $slug) { name } }',
-      { slug: 'missing' },
-    );
+  it('returns NOT_FOUND when the database is not seeded', async () => {
+    await prisma.profile.deleteMany();
+
+    const response = await graphql('{ profile { name } }');
 
     expect(response.body.data).toBeNull();
     expect(response.body.errors[0].extensions.code).toBe('NOT_FOUND');
+  });
+
+  it('rejects arguments missing from the schema', async () => {
+    const response = await graphql('{ profile(slug: "me") { name } }');
+
+    expect(response.body.errors[0].extensions.code).toBe(
+      'GRAPHQL_VALIDATION_FAILED',
+    );
   });
 
   it('rejects fields missing from the schema', async () => {

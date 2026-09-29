@@ -13,6 +13,6 @@ type Profile {
 }
 
 type Query {
-  """Returns the profile by slug, or the main profile when omitted"""
-  profile(slug: String): Profile!
+  """Returns the card owner profile"""
+  profile: Profile!
 }

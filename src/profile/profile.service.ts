@@ -1,26 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { Env } from '../config/env.schema.js';
 import type { Profile } from '../generated/prisma/client.js';
+import { MAIN_PROFILE_SLUG } from './profile.constants.js';
 import { ProfileRepository } from './profile.repository.js';
 
 @Injectable()
 export class ProfileService {
-  private readonly defaultSlug: string;
+  constructor(private readonly profiles: ProfileRepository) {}
 
-  constructor(
-    private readonly profiles: ProfileRepository,
-    config: ConfigService<Env, true>,
-  ) {
-    this.defaultSlug = config.get('PROFILE_SLUG', { infer: true });
-  }
-
-  async getBySlug(requested?: string | null): Promise<Profile> {
-    const slug = requested ?? this.defaultSlug;
-    const profile = await this.profiles.findBySlug(slug);
+  async getMain(): Promise<Profile> {
+    const profile = await this.profiles.findBySlug(MAIN_PROFILE_SLUG);
 
     if (!profile) {
-      throw new NotFoundException(`Profile "${slug}" not found`);
+      throw new NotFoundException(`Profile "${MAIN_PROFILE_SLUG}" not found`);
     }
 
     return profile;

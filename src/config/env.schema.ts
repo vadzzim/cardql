@@ -6,8 +6,6 @@ export const envSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
-  // Profile returned by the `profile` query when no slug is given
-  PROFILE_SLUG: z.string().min(1).default('me'),
 });
 
 export type Env = z.infer<typeof envSchema>;
