@@ -50,7 +50,6 @@ type Profile {
 
   """Profile skills in display order"""
   skills: [Skill!]!
-  slug: String!
 }
 
 type Project {

@@ -6,9 +6,6 @@ export class ProfileModel {
   id: string;
 
   @Field()
-  slug: string;
-
-  @Field()
   name: string;
 
   @Field()

@@ -7,7 +7,6 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
 
 const profile = {
-  slug: MAIN_PROFILE_SLUG,
   name: 'E2E User',
   headline: 'Test Engineer',
   description: 'Profile created by the e2e test',
@@ -55,6 +54,7 @@ describe('Profile (e2e)', () => {
     await prisma.profile.create({
       data: {
         ...profile,
+        slug: MAIN_PROFILE_SLUG,
         links: { create: links },
         skills: { create: skills },
         projects: { create: projects },
@@ -71,7 +71,6 @@ describe('Profile (e2e)', () => {
       {
         profile {
           id
-          slug
           name
           headline
           description
