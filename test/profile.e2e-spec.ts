@@ -129,6 +129,31 @@ describe('Profile (e2e)', () => {
     expect(response.body.data.profile.skills).toEqual([]);
   });
 
+  it('returns only the links and skills of the main profile', async () => {
+    await prisma.profile.create({
+      data: {
+        ...profile,
+        slug: 'other',
+        links: {
+          create: [
+            { label: 'Other', url: 'https://example.com/other', position: 0 },
+          ],
+        },
+        skills: { create: [{ name: 'Rust', position: 0 }] },
+      },
+    });
+
+    const response = await graphql(
+      '{ profile { links { label } skills { name } } }',
+    );
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile).toEqual({
+      links: [{ label: 'First' }, { label: 'Second' }],
+      skills: [{ name: 'TypeScript' }, { name: 'GraphQL' }],
+    });
+  });
+
   it('returns NOT_FOUND when the database is not seeded', async () => {
     await prisma.profile.deleteMany();
 
