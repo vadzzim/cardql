@@ -1,9 +1,7 @@
 import { defineConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { testEnv } from './test/utils/test-env.js';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
   test: {
     root: './',
     include: ['**/*.e2e-spec.ts'],
