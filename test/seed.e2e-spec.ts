@@ -1,5 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { buildFakeProfile } from '../prisma/seed-data/fake-profile.js';
+import { seedFakeProfiles } from '../prisma/seed-fake-profiles.js';
 import { seedProfile } from '../prisma/seed-profile.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
@@ -262,5 +264,46 @@ describe('seedProfile (e2e)', () => {
     ).rejects.toThrow(/Invalid seed profile/);
 
     expect(await readProfiles()).toEqual([before]);
+  });
+});
+
+describe('seedFakeProfiles (e2e)', () => {
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: testEnv.DATABASE_URL }),
+  });
+
+  const slugs = async () =>
+    (await prisma.profile.findMany({ select: { slug: true } }))
+      .map(({ slug }) => slug)
+      .sort();
+
+  beforeEach(async () => {
+    await prisma.profile.deleteMany();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('creates the requested number of generated profiles', async () => {
+    await seedFakeProfiles(prisma, 3);
+
+    expect(await slugs()).toEqual(['fake-0', 'fake-1', 'fake-2']);
+    const second = await prisma.profile.findUniqueOrThrow({
+      where: { slug: 'fake-1' },
+      include: { skills: true },
+    });
+    const expected = buildFakeProfile(1);
+    expect(second.name).toBe(expected.name);
+    expect(second.skills).toHaveLength(expected.skills.length);
+  });
+
+  it('replaces generated profiles and keeps the main one', async () => {
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedFakeProfiles(prisma, 3);
+
+    await seedFakeProfiles(prisma, 1);
+
+    expect(await slugs()).toEqual(['fake-0', MAIN_PROFILE_SLUG]);
   });
 });

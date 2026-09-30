@@ -72,11 +72,27 @@ The profile lives in [`prisma/seed-data/profile.ts`](prisma/seed-data/profile.ts
 Edit it and run `docker compose up --build` again.
 
 Seed runs on every application container start: in one transaction it deletes the
-existing profile with all related data and creates it again from the file, so the
-database always matches the file. All ids change on every run. The file is
-validated first (required fields, `http(s)` URLs, unique names, `YYYY-MM` months,
+card owner's profile with all related data and creates it again from the file, so
+the database always matches the file; other profiles are left alone. All ids
+change on every run. The file is validated first (required fields, `http(s)` URLs, unique names, `YYYY-MM` months,
 end month not before start month); invalid data stops the start and keeps the
 previous profile.
+
+### Generated profiles
+
+`pnpm db:seed:fake --count 500` adds generated profiles for development and load
+tests; they are never seeded on container start. A hand-written factory
+([`fake-profile.ts`](prisma/seed-data/fake-profile.ts)) builds each one with
+[Faker](https://fakerjs.dev) and passes it through the same validation and seed
+code as the real profile. Faker supplies names, companies and places; skills,
+job titles and achievements come from short curated lists, because Faker has no
+technology vocabulary. Careers are consecutive jobs without overlaps.
+
+Profile `N` always comes out the same: every index has its own generator seeded
+with that index, and periods count back from a fixed month, not today. A re-run
+replaces all generated profiles (slugs `fake-0`, `fake-1`, …) and keeps the card
+owner's one; `--count 0` removes them. Each profile is written in its own
+transaction, since one large transaction would contend and retry on CockroachDB.
 
 ## Architecture
 
@@ -89,7 +105,7 @@ src/
   common/        GraphQL error formatting
 prisma/
   schema.prisma, migrations/
-  seed-data/     profile data and its validation schema
+  seed-data/     profile data, its validation schema, fake profile factory
 test/            e2e tests against a real CockroachDB, smoke test
 ```
 
@@ -189,6 +205,7 @@ the API must return exactly the profile from `prisma/seed-data`.
 | `pnpm db:migrate` | Create and apply a new migration after changing `schema.prisma` |
 | `pnpm db:deploy` | Apply existing migrations (fresh setup, CI, Docker) |
 | `pnpm db:seed` | Recreate the profile from `prisma/seed-data` (safe to re-run) |
+| `pnpm db:seed:fake --count N` | Replace generated profiles with `N` new ones (default 100) |
 | `pnpm db:studio` | Browse data in Prisma Studio |
 | `docker compose down -v` | Stop and remove the app and database containers, network, and database data volume |
 
