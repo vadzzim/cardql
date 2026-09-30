@@ -1,12 +1,19 @@
 import { z } from 'zod';
+import {
+  parseYearMonth,
+  YEAR_MONTH_PATTERN,
+} from '../../src/experience/year-month.js';
 import type { Prisma } from '../../src/generated/prisma/client.js';
 
 type ProfileRow = Omit<
   Prisma.ProfileCreateInput,
-  'slug' | 'links' | 'skills'
+  'slug' | 'links' | 'skills' | 'experience'
 > & {
   links: Omit<Prisma.LinkCreateManyInput, 'profileId' | 'position'>[];
   skills: Omit<Prisma.SkillCreateManyInput, 'profileId' | 'position'>[];
+  experience: (Omit<Prisma.ExperienceCreateManyInput, 'profileId'> & {
+    achievements: Prisma.AchievementCreateManyInput['description'][];
+  })[];
 };
 
 const text = z.string().trim().min(1);
@@ -23,6 +30,26 @@ const linkSchema = z.strictObject({
 const skillSchema = z.strictObject({
   name: text,
 });
+
+// "2021-03" in the seed file, the first day of that month in the database.
+const yearMonth = z
+  .string()
+  .regex(YEAR_MONTH_PATTERN, 'Expected a month as "YYYY-MM"')
+  .transform(parseYearMonth);
+
+const experienceSchema = z
+  .strictObject({
+    company: text,
+    position: text,
+    startDate: yearMonth,
+    // Omitted or null while the job is current.
+    endDate: yearMonth.nullish(),
+    achievements: z.array(text),
+  })
+  .refine(({ startDate, endDate }) => !endDate || endDate >= startDate, {
+    message: 'endDate must not be before startDate',
+    path: ['endDate'],
+  });
 
 export const seedProfileSchema = z.strictObject({
   name: text,
@@ -43,6 +70,7 @@ export const seedProfileSchema = z.strictObject({
       (skills) => isUnique(skills, ({ name }) => name.toLowerCase()),
       'Skill names must be unique',
     ),
+  experience: z.array(experienceSchema),
 }) satisfies z.ZodType<ProfileRow>;
 
 export type SeedProfile = z.input<typeof seedProfileSchema>;

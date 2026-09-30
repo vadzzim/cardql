@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { createFormatError } from './common/graphql/format-error.js';
 import { type Env, validateEnv } from './config/env.schema.js';
+import { ExperienceModule } from './experience/experience.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { ProfileModule } from './profile/profile.module.js';
 
@@ -34,6 +35,7 @@ import { ProfileModule } from './profile/profile.module.js';
     }),
     PrismaModule,
     ProfileModule,
+    ExperienceModule,
   ],
 })
 export class AppModule {}

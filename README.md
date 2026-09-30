@@ -28,16 +28,30 @@ query {
     skills {
       name
     }
+    experience {
+      company
+      position
+      startDate
+      endDate
+      achievements {
+        description
+      }
+    }
   }
 }
 ```
 
+`startDate` and `endDate` are months in `YYYY-MM` format; `endDate` is `null` for
+the current job. Experience is returned newest first. Achievements of all entries
+are loaded with one batched query per request (DataLoader), not one query per
+entry.
+
 Edit `prisma/seed-data/profile.ts` and run `docker compose up --build` again to
-update the profile, its links and skills. Seed runs on every application container
-start: it deletes the existing profile with its links and skills and creates it
-again from `seed-data`, so the database always matches the file and links and
-skills follow the order of their arrays. Profile, link and skill ids change on
-every run.
+update the profile, its links, skills and experience. Seed runs on every
+application container start: it deletes the existing profile with all related
+data and creates it again from `seed-data`, so the database always matches the
+file and links, skills and achievements follow the order of their arrays. All ids
+change on every run.
 
 Use `docker compose down` to stop and remove the containers; database data stays
 in a volume. To change the host ports, copy `.env.example` to `.env` and adjust

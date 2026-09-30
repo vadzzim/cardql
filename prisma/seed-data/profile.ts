@@ -21,4 +21,24 @@ export const profile = {
     { name: 'Docker' },
     { name: 'Git' },
   ],
+  // Any order: the API returns experience newest first. Months are "YYYY-MM";
+  // omit endDate for the current job.
+  experience: [
+    {
+      company: 'Current Company',
+      position: 'Senior Backend Developer',
+      startDate: '2023-01',
+      achievements: [
+        'An achievement with a measurable result',
+        'Another achievement',
+      ],
+    },
+    {
+      company: 'Previous Company',
+      position: 'Backend Developer',
+      startDate: '2020-06',
+      endDate: '2022-12',
+      achievements: ['An achievement with a measurable result'],
+    },
+  ],
 } satisfies SeedProfile;

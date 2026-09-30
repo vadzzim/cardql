@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { profile } from './profile.js';
 import { validateSeedProfile } from './profile.schema.js';
 
+const job = {
+  company: 'Acme',
+  position: 'Engineer',
+  startDate: '2020-01',
+  endDate: '2021-06',
+  achievements: ['Shipped things'],
+};
+
 describe('validateSeedProfile', () => {
   it('accepts the bundled seed profile', () => {
     expect(() => validateSeedProfile(profile)).not.toThrow();
@@ -17,6 +25,26 @@ describe('validateSeedProfile', () => {
     const { location: _location, email: _email, ...rest } = profile;
 
     expect(() => validateSeedProfile(rest)).not.toThrow();
+  });
+
+  it('converts months to the first day of the month', () => {
+    const result = validateSeedProfile({
+      ...profile,
+      experience: [{ ...job, startDate: '2021-03', endDate: '2021-03' }],
+    });
+
+    expect(result.experience[0]).toMatchObject({
+      startDate: new Date('2021-03-01T00:00:00Z'),
+      endDate: new Date('2021-03-01T00:00:00Z'),
+    });
+  });
+
+  it('allows endDate to be omitted for the current job', () => {
+    const { endDate: _endDate, ...current } = job;
+
+    const result = validateSeedProfile({ ...profile, experience: [current] });
+
+    expect(result.experience[0].endDate).toBeUndefined();
   });
 
   it.each([
@@ -53,6 +81,18 @@ describe('validateSeedProfile', () => {
     [
       'duplicate skill names ignoring case',
       { skills: [{ name: 'TypeScript' }, { name: 'typescript' }] },
+    ],
+    ['an unknown experience field', { experience: [{ ...job, id: 'x' }] }],
+    ['a blank company', { experience: [{ ...job, company: ' ' }] }],
+    ['a blank achievement', { experience: [{ ...job, achievements: [''] }] }],
+    [
+      'a full start date',
+      { experience: [{ ...job, startDate: '2021-03-01' }] },
+    ],
+    ['month 13', { experience: [{ ...job, endDate: '2021-13' }] }],
+    [
+      'an end month before the start month',
+      { experience: [{ ...job, startDate: '2021-03', endDate: '2021-02' }] },
     ],
   ])('rejects %s', (_case, override) => {
     expect(() => validateSeedProfile({ ...profile, ...override })).toThrow(

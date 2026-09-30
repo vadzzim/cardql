@@ -2,6 +2,29 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Achievement {
+  description: String!
+  id: ID!
+}
+
+type Experience {
+  """Achievements in display order"""
+  achievements: [Achievement!]!
+  company: String!
+
+  """Last month of the job, "YYYY-MM"; null while it is current"""
+  endDate: String
+  id: ID!
+
+  """Job title"""
+  position: String!
+
+  """
+  First month of the job, "YYYY-MM"
+  """
+  startDate: String!
+}
+
 type Link {
   id: ID!
   label: String!
@@ -11,6 +34,9 @@ type Link {
 type Profile {
   description: String!
   email: String
+
+  """Work experience, newest first"""
+  experience: [Experience!]!
   headline: String!
   id: ID!
 

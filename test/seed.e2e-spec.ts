@@ -16,6 +16,21 @@ const profile = {
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/seed' },
   ],
   skills: [{ name: 'TypeScript' }, { name: 'NestJS' }],
+  experience: [
+    {
+      company: 'Acme',
+      position: 'Engineer',
+      startDate: '2020-01',
+      endDate: '2021-06',
+      achievements: ['Shipped the API', 'Cut latency'],
+    },
+    {
+      company: 'Globex',
+      position: 'Senior Engineer',
+      startDate: '2021-07',
+      achievements: [],
+    },
+  ],
 };
 
 describe('seedProfile (e2e)', () => {
@@ -28,6 +43,10 @@ describe('seedProfile (e2e)', () => {
       include: {
         links: { orderBy: { position: 'asc' } },
         skills: { orderBy: { position: 'asc' } },
+        experience: {
+          orderBy: { startDate: 'asc' },
+          include: { achievements: { orderBy: { position: 'asc' } } },
+        },
       },
     });
 
@@ -36,6 +55,22 @@ describe('seedProfile (e2e)', () => {
 
   const skillsOf = (seeded: Awaited<ReturnType<typeof readProfiles>>[number]) =>
     seeded.skills.map(({ name, position }) => ({ name, position }));
+
+  const experienceOf = (
+    seeded: Awaited<ReturnType<typeof readProfiles>>[number],
+  ) =>
+    seeded.experience.map(
+      ({ company, position, startDate, endDate, achievements }) => ({
+        company,
+        position,
+        startDate,
+        endDate,
+        achievements: achievements.map(({ description, position }) => ({
+          description,
+          position,
+        })),
+      }),
+    );
 
   beforeEach(async () => {
     await prisma.profile.deleteMany();
@@ -67,6 +102,59 @@ describe('seedProfile (e2e)', () => {
       { name: 'TypeScript', position: 0 },
       { name: 'NestJS', position: 1 },
     ]);
+  });
+
+  it('creates experience with months as dates and achievements in array order', async () => {
+    await seedProfile(prisma, profile);
+
+    const [seeded] = await readProfiles();
+    expect(experienceOf(seeded)).toEqual([
+      {
+        company: 'Acme',
+        position: 'Engineer',
+        startDate: new Date('2020-01-01T00:00:00Z'),
+        endDate: new Date('2021-06-01T00:00:00Z'),
+        achievements: [
+          { description: 'Shipped the API', position: 0 },
+          { description: 'Cut latency', position: 1 },
+        ],
+      },
+      {
+        company: 'Globex',
+        position: 'Senior Engineer',
+        startDate: new Date('2021-07-01T00:00:00Z'),
+        endDate: null,
+        achievements: [],
+      },
+    ]);
+  });
+
+  it('replaces experience and achievements on a repeated run', async () => {
+    await seedProfile(prisma, profile);
+    await seedProfile(prisma, {
+      ...profile,
+      experience: [
+        {
+          company: 'Initech',
+          position: 'Lead',
+          startDate: '2022-02',
+          achievements: ['Led the team'],
+        },
+      ],
+    });
+
+    const [seeded] = await readProfiles();
+    expect(experienceOf(seeded)).toEqual([
+      {
+        company: 'Initech',
+        position: 'Lead',
+        startDate: new Date('2022-02-01T00:00:00Z'),
+        endDate: null,
+        achievements: [{ description: 'Led the team', position: 0 }],
+      },
+    ]);
+    expect(await prisma.experience.count()).toBe(1);
+    expect(await prisma.achievement.count()).toBe(1);
   });
 
   it('replaces links on a repeated run', async () => {
@@ -116,7 +204,13 @@ describe('seedProfile (e2e)', () => {
 
   it('removes profiles other than the main one', async () => {
     await prisma.profile.create({
-      data: { ...profile, slug: 'stale', links: undefined, skills: undefined },
+      data: {
+        ...profile,
+        slug: 'stale',
+        links: undefined,
+        skills: undefined,
+        experience: undefined,
+      },
     });
 
     await seedProfile(prisma, profile);

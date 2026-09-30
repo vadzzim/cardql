@@ -22,6 +22,7 @@ model Profile {
   email       String?
   links       Link[]
   skills      Skill[]
+  experience  Experience[]
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -55,4 +56,38 @@ model Skill {
 
   @@unique([profileId, position])
   @@map("skills")
+}
+
+model Experience {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId    String        @map("profile_id") @db.Uuid
+  profile      Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company      String
+  // Job title. Entries have no display order column: they are ordered by dates.
+  position     String
+  // First day of the start month; the API exposes month precision only.
+  startDate    DateTime      @map("start_date") @db.Date
+  // First day of the end month, or null while the job is current. The
+  // migration adds a CHECK that it is not before start_date.
+  endDate      DateTime?     @map("end_date") @db.Date
+  achievements Achievement[]
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([profileId, startDate])
+  @@map("experience")
+}
+
+model Achievement {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  experienceId String     @map("experience_id") @db.Uuid
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  description  String
+  // Display order within the experience entry, starting from 0.
+  position     Int
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([experienceId, position])
+  @@map("achievements")
 }
