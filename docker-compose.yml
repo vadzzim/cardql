@@ -12,6 +12,24 @@ services:
       DATABASE_URL: postgresql://root@db:26257/${DB_NAME:-cardql}?sslmode=disable
     ports:
       - "${PORT:-3000}:3000"
+    # Healthy once NestJS answers a GraphQL request. Migrations and seed run
+    # before NestJS starts, so a healthy app also has a prepared database.
+    # The slim image has no curl, hence Node's fetch.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://localhost:3000/graphql', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ query: '{ __typename }' }),
+          }).then((res) => process.exit(res.ok ? 0 : 1), () => process.exit(1))
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
   db:
     image: cockroachdb/cockroach:v26.2.7

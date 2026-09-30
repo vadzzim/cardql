@@ -29,3 +29,9 @@ jobs:
       - run: docker compose up -d --wait db
       - run: pnpm test:e2e
       - run: pnpm build
+      # Fresh start as in the README: build the image, let the app migrate and
+      # seed its database, wait for its healthcheck, then query the API.
+      - run: docker compose up --build --wait --wait-timeout 300
+      - run: pnpm smoke
+      - if: failure()
+        run: docker compose logs app

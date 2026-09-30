@@ -107,6 +107,9 @@ pnpm run typecheck
 
 # everything that does not need a database: format, lint, typecheck, unit tests
 pnpm run check
+
+# query a running app (docker compose up) and compare it with seed-data
+pnpm run smoke
 ```
 
 `pnpm check` regenerates the Prisma client first, because typecheck and type-aware
@@ -114,6 +117,9 @@ lint need its types; like `prisma generate`, it needs `DATABASE_URL` (from `.env
 
 CI (GitHub Actions) runs `pnpm check`, e2e tests against CockroachDB from
 `docker compose`, and `pnpm build` on every push to `main` and every pull request.
+Then it starts the whole application from scratch with `docker compose up --build`,
+waits for the app healthcheck and runs `pnpm smoke`: the API must return exactly
+the profile from `prisma/seed-data`.
 
 E2E tests need CockroachDB running (`docker compose up -d db`). They use a separate `cardql_test` database on the same server: it is created and migrated automatically before the run, so development data is never touched.
 
