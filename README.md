@@ -134,6 +134,10 @@ in production.
   sequential ids to spread writes across ranges.
 - **Startup fails fast.** Environment variables are validated with Zod, and the
   app runs a real query on start, because Prisma's driver adapter connects lazily.
+- **One-stage Docker image with dev dependencies.** The container applies
+  migrations with the Prisma CLI and runs the TypeScript seed with `tsx` before
+  NestJS starts, so both have to be in the runtime image anyway; a separate
+  production-only stage would save little and add a second dependency install.
 
 ## Local development
 
