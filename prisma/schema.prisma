@@ -27,6 +27,8 @@ model Profile {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
+  // Keyset pagination of the profile list: ordered by name, id breaks ties.
+  @@index([name, id])
   @@map("profiles")
 }
 

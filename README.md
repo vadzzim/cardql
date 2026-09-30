@@ -63,6 +63,34 @@ query {
   format; `endDate` is `null` for the current job.
 - Without seeded data, `profile` fails with the `NOT_FOUND` error code.
 
+Other profiles (for example, generated ones, see below) are listed page by page
+and fetched by id; `profile` without `id` is always the card owner:
+
+```graphql
+query {
+  profiles(first: 10) {
+    nodes {
+      id
+      name
+      skills {
+        name
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+- Profiles are ordered by name. Pass `endCursor` as `after` to get the next
+  page; `hasNextPage` is `false` on the last one.
+- `first` is 20 by default and at most 50. An invalid `first` or cursor fails
+  with `BAD_REQUEST`.
+- `profile(id: "...")` returns that profile, `NOT_FOUND` for an unknown id and
+  `BAD_REQUEST` for an id that is not a UUID.
+
 The full schema is in [`schema.gql`](schema.gql), generated from the code on every
 development start.
 
@@ -98,7 +126,7 @@ transaction, since one large transaction would contend and retry on CockroachDB.
 
 ```
 src/
-  profile/       Profile query; links, skills and projects
+  profile/       profile and profiles queries; links, skills and projects
   experience/    Profile.experience and achievements
   prisma/        PrismaService, shared by all repositories
   config/        environment validation
@@ -133,6 +161,15 @@ in production.
   `experience { achievements }` already has many parents, and a list of profiles
   needs no changes in the relation resolvers. E2e tests check that each relation
   is queried once per request.
+- **Keyset pagination for the profile list.** `profiles` is ordered by
+  `(name, id)`, and the cursor holds the name and id of the last profile on the
+  page: the next page is `WHERE (name, id) > (cursor)`, read from a
+  `(name, id)` index with no rows skipped, so every page costs the same. Unlike an
+  offset, it neither repeats nor skips profiles when others are added or removed
+  in between, and the cursor survives the seed recreating all rows. One extra row
+  tells whether another page follows, without a `COUNT(*)`. `createdAt` would be
+  a worse sort key: the database keeps microseconds, a JavaScript `Date` only
+  milliseconds, so a cursor built from it could repeat rows.
 - **Loaders are per request without request-scoped providers.** Nest's
   `Scope.REQUEST` would spread to the resolvers and recreate them on every
   request. Instead, a singleton keeps loaders in a `WeakMap` keyed by the

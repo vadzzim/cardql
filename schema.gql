@@ -31,6 +31,14 @@ type Link {
   url: String!
 }
 
+type PageInfo {
+  """Pass as `after` to get the next page; null for an empty page"""
+  endCursor: String
+
+  """Whether more items follow endCursor"""
+  hasNextPage: Boolean!
+}
+
 type Profile {
   description: String!
   email: String
@@ -52,6 +60,11 @@ type Profile {
   skills: [Skill!]!
 }
 
+type ProfileConnection {
+  nodes: [Profile!]!
+  pageInfo: PageInfo!
+}
+
 type Project {
   id: ID!
   name: String!
@@ -61,8 +74,17 @@ type Project {
 }
 
 type Query {
-  """Returns the card owner profile"""
-  profile: Profile!
+  """Returns the profile with this id, or the card owner profile"""
+  profile(id: ID): Profile!
+
+  """Returns all profiles ordered by name, page by page"""
+  profiles(
+    """endCursor of the previous page; omit for the first page"""
+    after: String
+
+    """Page size, from 1 to 50"""
+    first: Int! = 20
+  ): ProfileConnection!
 }
 
 type Skill {

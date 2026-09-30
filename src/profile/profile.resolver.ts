@@ -1,16 +1,21 @@
 import {
+  Args,
   Context,
+  ID,
   Parent,
   Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { ParseUUIDPipe } from '@nestjs/common';
 import { LinkModel } from './models/link.model.js';
+import { ProfileConnectionModel } from './models/profile-connection.model.js';
 import { ProfileModel } from './models/profile.model.js';
 import { ProjectModel } from './models/project.model.js';
 import { SkillModel } from './models/skill.model.js';
 import { ProfileLoaders } from './profile.loaders.js';
 import { ProfileService } from './profile.service.js';
+import { ProfilesArgs } from './profiles.args.js';
 
 @Resolver(() => ProfileModel)
 export class ProfileResolver {
@@ -19,9 +24,27 @@ export class ProfileResolver {
     private readonly loaders: ProfileLoaders,
   ) {}
 
-  @Query(() => ProfileModel, { description: 'Returns the card owner profile' })
-  profile(): Promise<ProfileModel> {
-    return this.profileService.getMain();
+  @Query(() => ProfileModel, {
+    description: 'Returns the profile with this id, or the card owner profile',
+  })
+  profile(
+    @Args(
+      'id',
+      { type: () => ID, nullable: true },
+      new ParseUUIDPipe({ optional: true }),
+    )
+    id?: string | null,
+  ): Promise<ProfileModel> {
+    return id ? this.profileService.getById(id) : this.profileService.getMain();
+  }
+
+  @Query(() => ProfileConnectionModel, {
+    description: 'Returns all profiles ordered by name, page by page',
+  })
+  profiles(
+    @Args() { first, after }: ProfilesArgs,
+  ): Promise<ProfileConnectionModel> {
+    return this.profileService.getPage(first, after);
   }
 
   // Relations are resolved separately so each query runs only when its field
