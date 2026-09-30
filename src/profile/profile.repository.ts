@@ -7,6 +7,7 @@ import type {
 } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
+// Relation queries take many profile ids at once for DataLoader batching.
 @Injectable()
 export class ProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -15,23 +16,23 @@ export class ProfileRepository {
     return this.prisma.profile.findUnique({ where: { slug } });
   }
 
-  findLinks(profileId: string): Promise<Link[]> {
+  findLinksByProfileIds(profileIds: readonly string[]): Promise<Link[]> {
     return this.prisma.link.findMany({
-      where: { profileId },
+      where: { profileId: { in: [...profileIds] } },
       orderBy: { position: 'asc' },
     });
   }
 
-  findSkills(profileId: string): Promise<Skill[]> {
+  findSkillsByProfileIds(profileIds: readonly string[]): Promise<Skill[]> {
     return this.prisma.skill.findMany({
-      where: { profileId },
+      where: { profileId: { in: [...profileIds] } },
       orderBy: { position: 'asc' },
     });
   }
 
-  findProjects(profileId: string): Promise<Project[]> {
+  findProjectsByProfileIds(profileIds: readonly string[]): Promise<Project[]> {
     return this.prisma.project.findMany({
-      where: { profileId },
+      where: { profileId: { in: [...profileIds] } },
       orderBy: { position: 'asc' },
     });
   }

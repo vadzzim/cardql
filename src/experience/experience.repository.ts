@@ -8,9 +8,9 @@ export class ExperienceRepository {
 
   // Newest first; among jobs started in the same month, the current or most
   // recently finished one comes first.
-  findByProfileId(profileId: string): Promise<Experience[]> {
+  findByProfileIds(profileIds: readonly string[]): Promise<Experience[]> {
     return this.prisma.experience.findMany({
-      where: { profileId },
+      where: { profileId: { in: [...profileIds] } },
       orderBy: [
         { startDate: 'desc' },
         { endDate: { sort: 'desc', nulls: 'first' } },

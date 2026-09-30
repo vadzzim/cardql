@@ -1,10 +1,20 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
+import { ProfileRepository } from '../src/profile/profile.repository.js';
 
 const profile = {
   name: 'E2E User',
@@ -60,6 +70,10 @@ describe('Profile (e2e)', () => {
         projects: { create: projects },
       },
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -190,6 +204,21 @@ describe('Profile (e2e)', () => {
       skills: [{ name: 'TypeScript' }, { name: 'GraphQL' }],
       projects: [{ name: 'Alpha' }, { name: 'Beta' }],
     });
+  });
+
+  it('queries each relation once per request, only when it is asked for', async () => {
+    const repository = app.get(ProfileRepository);
+    const findLinks = vi.spyOn(repository, 'findLinksByProfileIds');
+    const findSkills = vi.spyOn(repository, 'findSkillsByProfileIds');
+    const findProjects = vi.spyOn(repository, 'findProjectsByProfileIds');
+
+    await graphql('{ profile { links { label } skills { name } } }');
+    await graphql('{ profile { links { label } } }');
+
+    // Loaders cache within a request only, so each request queries again.
+    expect(findLinks).toHaveBeenCalledTimes(2);
+    expect(findSkills).toHaveBeenCalledOnce();
+    expect(findProjects).not.toHaveBeenCalled();
   });
 
   it('returns NOT_FOUND when the database is not seeded', async () => {

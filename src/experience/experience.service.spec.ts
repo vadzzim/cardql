@@ -1,7 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Achievement } from '../generated/prisma/client.js';
+import type { Achievement, Experience } from '../generated/prisma/client.js';
 import type { ExperienceRepository } from './experience.repository.js';
 import { ExperienceService } from './experience.service.js';
+
+const entry = (profileId: string, company: string): Experience => ({
+  id: `${profileId}-${company}`,
+  profileId,
+  company,
+  position: 'Engineer',
+  startDate: new Date(0),
+  endDate: null,
+  createdAt: new Date(0),
+  updatedAt: new Date(0),
+});
 
 const achievement = (experienceId: string, position: number): Achievement => ({
   id: `${experienceId}-${position}`,
@@ -12,9 +23,15 @@ const achievement = (experienceId: string, position: number): Achievement => ({
   updatedAt: new Date(0),
 });
 
-function serviceReturning(achievements: Achievement[]) {
+function serviceWith(rows: {
+  experience?: Experience[];
+  achievements?: Achievement[];
+}) {
   const repository = {
-    findAchievementsByExperienceIds: vi.fn().mockResolvedValue(achievements),
+    findByProfileIds: vi.fn().mockResolvedValue(rows.experience ?? []),
+    findAchievementsByExperienceIds: vi
+      .fn()
+      .mockResolvedValue(rows.achievements ?? []),
   };
   const service = new ExperienceService(
     repository as unknown as ExperienceRepository,
@@ -23,40 +40,47 @@ function serviceReturning(achievements: Achievement[]) {
   return { service, repository };
 }
 
-describe('ExperienceService.getAchievementsByExperienceIds', () => {
-  it('loads all ids with one repository call', async () => {
-    const { service, repository } = serviceReturning([]);
+describe('ExperienceService', () => {
+  it('loads experience of all profiles with one call, grouped by profile', async () => {
+    const { service, repository } = serviceWith({
+      experience: [
+        entry('a', 'Acme'),
+        entry('b', 'Globex'),
+        entry('a', 'Initech'),
+      ],
+    });
 
-    await service.getAchievementsByExperienceIds(['a', 'b']);
+    const groups = await service.getByProfileIds(['b', 'a', 'c']);
 
-    expect(repository.findAchievementsByExperienceIds).toHaveBeenCalledOnce();
-    expect(repository.findAchievementsByExperienceIds).toHaveBeenCalledWith([
-      'a',
+    expect(repository.findByProfileIds).toHaveBeenCalledExactlyOnceWith([
       'b',
+      'a',
+      'c',
+    ]);
+    expect(groups).toEqual([
+      [entry('b', 'Globex')],
+      [entry('a', 'Acme'), entry('a', 'Initech')],
+      [],
     ]);
   });
 
-  it('groups achievements by id in the order of the ids', async () => {
-    // The repository returns rows sorted by position, not by entry.
-    const { service } = serviceReturning([
-      achievement('a', 0),
-      achievement('b', 0),
-      achievement('a', 1),
-    ]);
+  it('loads achievements of all entries with one call, grouped by entry', async () => {
+    const { service, repository } = serviceWith({
+      achievements: [
+        achievement('a', 0),
+        achievement('b', 0),
+        achievement('a', 1),
+      ],
+    });
 
     const groups = await service.getAchievementsByExperienceIds(['b', 'a']);
 
+    expect(
+      repository.findAchievementsByExperienceIds,
+    ).toHaveBeenCalledExactlyOnceWith(['b', 'a']);
     expect(groups).toEqual([
       [achievement('b', 0)],
       [achievement('a', 0), achievement('a', 1)],
     ]);
-  });
-
-  it('returns an empty list for an id without achievements', async () => {
-    const { service } = serviceReturning([achievement('a', 0)]);
-
-    const groups = await service.getAchievementsByExperienceIds(['a', 'b']);
-
-    expect(groups).toEqual([[achievement('a', 0)], []]);
   });
 });

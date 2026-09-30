@@ -99,10 +99,10 @@ transaction, since one large transaction would contend and retry on CockroachDB.
 ```
 src/
   profile/       Profile query; links, skills and projects
-  experience/    Profile.experience and achievements, DataLoader
+  experience/    Profile.experience and achievements
   prisma/        PrismaService, shared by all repositories
   config/        environment validation
-  common/        GraphQL error formatting
+  common/        GraphQL error formatting, per-request DataLoader helpers
 prisma/
   schema.prisma, migrations/
   seed-data/     profile data, its validation schema, fake profile factory
@@ -111,7 +111,8 @@ test/            e2e tests against a real CockroachDB, smoke test
 
 Each feature module has three layers:
 
-- **Resolver** — the GraphQL API: schema types and field resolution.
+- **Resolver** — the GraphQL API: schema types and field resolution, through
+  per-request loaders for relations.
 - **Service** — business logic: which profile is the card owner's, what happens
   when it is missing, how batched rows map to entries.
 - **Repository** — data access: the only layer that queries the database.
@@ -124,11 +125,14 @@ in production.
 
 - **Relations are resolved lazily.** Every relation is a separate field resolver,
   so a query pays only for the fields it asks for.
-- **No N+1 for nested lists.** `experience` is a list, and each entry has
-  `achievements`: one query per entry would grow with the data. A DataLoader
-  collects the entry ids of one request and loads all their achievements with a
-  single `WHERE experience_id IN (...)` query. An e2e test checks that it stays one
-  query per request.
+- **No N+1 for nested lists.** Every relation (`links`, `skills`, `projects`,
+  `experience`, `achievements`) goes through a DataLoader: it collects the parent
+  ids of one request and loads all their rows with a single
+  `WHERE parent_id IN (...)` query, so the number of queries depends on the shape
+  of the query, not on the amount of data. Today there is one profile, but
+  `experience { achievements }` already has many parents, and a list of profiles
+  needs no changes in the relation resolvers. E2e tests check that each relation
+  is queried once per request.
 - **Loaders are per request without request-scoped providers.** Nest's
   `Scope.REQUEST` would spread to the resolvers and recreate them on every
   request. Instead, a singleton keeps loaders in a `WeakMap` keyed by the

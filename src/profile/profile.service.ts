@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { groupByKeys } from '../common/dataloader/group-by-keys.js';
 import type {
   Link,
   Profile,
@@ -22,15 +23,24 @@ export class ProfileService {
     return profile;
   }
 
-  getLinks(profileId: string): Promise<Link[]> {
-    return this.profiles.findLinks(profileId);
+  // Batch loaders: one list per profile id, in the order of the ids, each in
+  // display order.
+  async getLinksByProfileIds(profileIds: readonly string[]): Promise<Link[][]> {
+    const links = await this.profiles.findLinksByProfileIds(profileIds);
+    return groupByKeys(profileIds, links, ({ profileId }) => profileId);
   }
 
-  getSkills(profileId: string): Promise<Skill[]> {
-    return this.profiles.findSkills(profileId);
+  async getSkillsByProfileIds(
+    profileIds: readonly string[],
+  ): Promise<Skill[][]> {
+    const skills = await this.profiles.findSkillsByProfileIds(profileIds);
+    return groupByKeys(profileIds, skills, ({ profileId }) => profileId);
   }
 
-  getProjects(profileId: string): Promise<Project[]> {
-    return this.profiles.findProjects(profileId);
+  async getProjectsByProfileIds(
+    profileIds: readonly string[],
+  ): Promise<Project[][]> {
+    const projects = await this.profiles.findProjectsByProfileIds(profileIds);
+    return groupByKeys(profileIds, projects, ({ profileId }) => profileId);
   }
 }

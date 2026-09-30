@@ -1,13 +1,13 @@
 import { Context, Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import type { Experience } from '../generated/prisma/client.js';
-import { AchievementsLoader } from './achievements.loader.js';
+import { ExperienceLoaders } from './experience.loaders.js';
 import { AchievementModel } from './models/achievement.model.js';
 import { ExperienceModel } from './models/experience.model.js';
 import { formatYearMonth } from './year-month.js';
 
 @Resolver(() => ExperienceModel)
 export class ExperienceResolver {
-  constructor(private readonly achievementsLoader: AchievementsLoader) {}
+  constructor(private readonly loaders: ExperienceLoaders) {}
 
   @ResolveField(() => String, {
     description: 'First month of the job, "YYYY-MM"',
@@ -31,6 +31,6 @@ export class ExperienceResolver {
     @Parent() experience: Experience,
     @Context() context: object,
   ): Promise<AchievementModel[]> {
-    return this.achievementsLoader.forContext(context).load(experience.id);
+    return this.loaders.achievements.forContext(context).load(experience.id);
   }
 }
