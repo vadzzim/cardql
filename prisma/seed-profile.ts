@@ -1,23 +1,24 @@
 import type { PrismaClient } from '../src/generated/prisma/client.js';
-import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
 import {
   type SeedProfile,
   validateSeedProfile,
 } from './seed-data/profile.schema.js';
 
+// Recreates the profile with this slug; other profiles stay untouched.
 export async function seedProfile(
   prisma: PrismaClient,
+  slug: string,
   input: SeedProfile,
 ): Promise<void> {
   const { links, skills, experience, projects, ...data } =
     validateSeedProfile(input);
 
   await prisma.$transaction(async (tx) => {
-    await tx.profile.deleteMany();
+    await tx.profile.deleteMany({ where: { slug } });
     await tx.profile.create({
       data: {
         ...data,
-        slug: MAIN_PROFILE_SLUG,
+        slug,
         links: {
           create: links.map((link, position) => ({ ...link, position })),
         },

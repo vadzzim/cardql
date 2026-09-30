@@ -1,19 +1,12 @@
-import 'dotenv/config';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { validateEnv } from '../src/config/env.schema.js';
-import { PrismaClient } from '../src/generated/prisma/client.js';
 import { MAIN_PROFILE_SLUG } from '../src/profile/profile.constants.js';
 import { profile } from './seed-data/profile.js';
+import { createSeedClient } from './seed-client.js';
 import { seedProfile } from './seed-profile.js';
 
-const { DATABASE_URL } = validateEnv(process.env);
-
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: DATABASE_URL }),
-});
+const prisma = createSeedClient();
 
 async function main(): Promise<void> {
-  await seedProfile(prisma, profile);
+  await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
 
   console.log(
     `Seeded profile "${MAIN_PROFILE_SLUG}" with ${profile.links.length} link(s), ${profile.skills.length} skill(s), ${profile.experience.length} experience entr(ies) and ${profile.projects.length} project(s)`,

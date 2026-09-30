@@ -91,7 +91,7 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('creates the main profile with links and skills in array order', async () => {
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
 
     const [seeded, ...rest] = await readProfiles();
     expect(rest).toEqual([]);
@@ -115,7 +115,7 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('creates experience with months as dates and achievements in array order', async () => {
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
 
     const [seeded] = await readProfiles();
     expect(experienceOf(seeded)).toEqual([
@@ -140,8 +140,8 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('replaces experience and achievements on a repeated run', async () => {
-    await seedProfile(prisma, profile);
-    await seedProfile(prisma, {
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, {
       ...profile,
       experience: [
         {
@@ -168,7 +168,7 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('creates projects in array order', async () => {
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
 
     const [seeded] = await readProfiles();
     expect(projectsOf(seeded)).toEqual([
@@ -182,8 +182,8 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('replaces projects on a repeated run', async () => {
-    await seedProfile(prisma, profile);
-    await seedProfile(prisma, {
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, {
       ...profile,
       projects: [{ name: 'blog', url: 'https://seed.dev/blog' }],
     });
@@ -196,8 +196,8 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('replaces links on a repeated run', async () => {
-    await seedProfile(prisma, profile);
-    await seedProfile(prisma, {
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, {
       ...profile,
       links: [
         { label: 'Site', url: 'https://seed.dev' },
@@ -215,8 +215,8 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('replaces skills on a repeated run', async () => {
-    await seedProfile(prisma, profile);
-    await seedProfile(prisma, {
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, {
       ...profile,
       skills: [{ name: 'Docker' }, { name: 'TypeScript' }, { name: 'Prisma' }],
     });
@@ -232,38 +232,33 @@ describe('seedProfile (e2e)', () => {
   });
 
   it('clears optional fields removed from seed data', async () => {
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
     const { location: _location, email: _email, ...rest } = profile;
-    await seedProfile(prisma, rest);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, rest);
 
     const [seeded] = await readProfiles();
     expect(seeded).toMatchObject({ location: null, email: null });
   });
 
-  it('removes profiles other than the main one', async () => {
-    await prisma.profile.create({
-      data: {
-        ...profile,
-        slug: 'stale',
-        links: undefined,
-        skills: undefined,
-        experience: undefined,
-        projects: undefined,
-      },
-    });
+  it('keeps profiles with other slugs', async () => {
+    await seedProfile(prisma, 'other', profile);
 
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
 
     const seeded = await readProfiles();
-    expect(seeded.map(({ slug }) => slug)).toEqual([MAIN_PROFILE_SLUG]);
+    expect(seeded.map(({ slug }) => slug).sort()).toEqual([
+      MAIN_PROFILE_SLUG,
+      'other',
+    ]);
   });
 
   it('keeps the existing profile when seed data is invalid', async () => {
-    await seedProfile(prisma, profile);
+    await seedProfile(prisma, MAIN_PROFILE_SLUG, profile);
     const [before] = await readProfiles();
 
     await expect(
-      seedProfile(prisma, { ...profile, name: '   ' }),
+      seedProfile(prisma, MAIN_PROFILE_SLUG, { ...profile, name: '   ' }),
     ).rejects.toThrow(/Invalid seed profile/);
 
     expect(await readProfiles()).toEqual([before]);
