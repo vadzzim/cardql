@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Link, Profile, Skill } from '../generated/prisma/client.js';
+import type {
+  Link,
+  Profile,
+  Project,
+  Skill,
+} from '../generated/prisma/client.js';
 import { MAIN_PROFILE_SLUG } from './profile.constants.js';
 import { ProfileRepository } from './profile.repository.js';
 
@@ -23,5 +28,9 @@ export class ProfileService {
 
   getSkills(profileId: string): Promise<Skill[]> {
     return this.profiles.findSkills(profileId);
+  }
+
+  getProjects(profileId: string): Promise<Project[]> {
+    return this.profiles.findProjects(profileId);
   }
 }

@@ -9,7 +9,8 @@ export async function seedProfile(
   prisma: PrismaClient,
   input: SeedProfile,
 ): Promise<void> {
-  const { links, skills, experience, ...data } = validateSeedProfile(input);
+  const { links, skills, experience, projects, ...data } =
+    validateSeedProfile(input);
 
   await prisma.$transaction(async (tx) => {
     await tx.profile.deleteMany();
@@ -32,6 +33,12 @@ export async function seedProfile(
                 position,
               })),
             },
+          })),
+        },
+        projects: {
+          create: projects.map((project, position) => ({
+            ...project,
+            position,
           })),
         },
       },

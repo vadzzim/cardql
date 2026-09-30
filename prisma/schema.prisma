@@ -23,6 +23,7 @@ model Profile {
   links       Link[]
   skills      Skill[]
   experience  Experience[]
+  projects    Project[]
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -56,6 +57,22 @@ model Skill {
 
   @@unique([profileId, position])
   @@map("skills")
+}
+
+model Project {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  // Project page or repository.
+  url       String
+  // Display order within the profile, starting from 0.
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([profileId, position])
+  @@map("projects")
 }
 
 model Experience {

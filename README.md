@@ -28,6 +28,10 @@ query {
     skills {
       name
     }
+    projects {
+      name
+      url
+    }
     experience {
       company
       position
@@ -47,10 +51,10 @@ are loaded with one batched query per request (DataLoader), not one query per
 entry.
 
 Edit `prisma/seed-data/profile.ts` and run `docker compose up --build` again to
-update the profile, its links, skills and experience. Seed runs on every
+update the profile, its links, skills, projects and experience. Seed runs on every
 application container start: it deletes the existing profile with all related
 data and creates it again from `seed-data`, so the database always matches the
-file and links, skills and achievements follow the order of their arrays. All ids
+file and links, skills, projects and achievements follow the order of their arrays. All ids
 change on every run.
 
 Use `docker compose down` to stop and remove the containers; database data stays

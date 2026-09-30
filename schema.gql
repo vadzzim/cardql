@@ -45,9 +45,20 @@ type Profile {
   location: String
   name: String!
 
+  """Profile projects in display order"""
+  projects: [Project!]!
+
   """Profile skills in display order"""
   skills: [Skill!]!
   slug: String!
+}
+
+type Project {
+  id: ID!
+  name: String!
+
+  """Project page or repository"""
+  url: String!
 }
 
 type Query {

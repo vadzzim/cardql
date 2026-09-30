@@ -82,6 +82,28 @@ describe('validateSeedProfile', () => {
       'duplicate skill names ignoring case',
       { skills: [{ name: 'TypeScript' }, { name: 'typescript' }] },
     ],
+    [
+      'an unknown project field',
+      { projects: [{ name: 'A', url: 'https://a.dev', id: 'x' }] },
+    ],
+    [
+      'a project with a blank name',
+      { projects: [{ name: ' ', url: 'https://a.dev' }] },
+    ],
+    ['a project without a url', { projects: [{ name: 'A' }] }],
+    [
+      'a project with a non-http url',
+      { projects: [{ name: 'A', url: 'ftp://a.dev' }] },
+    ],
+    [
+      'duplicate project names',
+      {
+        projects: [
+          { name: 'A', url: 'https://a.dev' },
+          { name: 'A', url: 'https://b.dev' },
+        ],
+      },
+    ],
     ['an unknown experience field', { experience: [{ ...job, id: 'x' }] }],
     ['a blank company', { experience: [{ ...job, company: ' ' }] }],
     ['a blank achievement', { experience: [{ ...job, achievements: [''] }] }],

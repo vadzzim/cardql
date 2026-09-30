@@ -41,4 +41,7 @@ export const profile = {
       achievements: ['An achievement with a measurable result'],
     },
   ],
+  projects: [
+    { name: 'cardql', url: 'https://github.com/your-username/cardql' },
+  ],
 } satisfies SeedProfile;

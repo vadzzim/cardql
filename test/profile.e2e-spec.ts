@@ -26,6 +26,11 @@ const skills = [
   { name: 'TypeScript', position: 0 },
 ];
 
+const projects = [
+  { name: 'Beta', url: 'https://example.com/beta', position: 1 },
+  { name: 'Alpha', url: 'https://example.com/alpha', position: 0 },
+];
+
 describe('Profile (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -43,7 +48,7 @@ describe('Profile (e2e)', () => {
     prisma = app.get(PrismaService);
   });
 
-  // Links and skills are removed with their profile by the ON DELETE CASCADE
+  // Links, skills and projects are removed with their profile by the ON DELETE CASCADE
   // foreign keys.
   beforeEach(async () => {
     await prisma.profile.deleteMany();
@@ -52,6 +57,7 @@ describe('Profile (e2e)', () => {
         ...profile,
         links: { create: links },
         skills: { create: skills },
+        projects: { create: projects },
       },
     });
   });
@@ -129,7 +135,34 @@ describe('Profile (e2e)', () => {
     expect(response.body.data.profile.skills).toEqual([]);
   });
 
-  it('returns only the links and skills of the main profile', async () => {
+  it('returns projects in display order', async () => {
+    const response = await graphql('{ profile { projects { id name url } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.projects).toEqual([
+      {
+        id: expect.any(String),
+        name: 'Alpha',
+        url: 'https://example.com/alpha',
+      },
+      {
+        id: expect.any(String),
+        name: 'Beta',
+        url: 'https://example.com/beta',
+      },
+    ]);
+  });
+
+  it('returns an empty list when the profile has no projects', async () => {
+    await prisma.project.deleteMany();
+
+    const response = await graphql('{ profile { projects { name } } }');
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.profile.projects).toEqual([]);
+  });
+
+  it('returns only the links, skills and projects of the main profile', async () => {
     await prisma.profile.create({
       data: {
         ...profile,
@@ -140,17 +173,23 @@ describe('Profile (e2e)', () => {
           ],
         },
         skills: { create: [{ name: 'Rust', position: 0 }] },
+        projects: {
+          create: [
+            { name: 'Other', url: 'https://example.com/other', position: 0 },
+          ],
+        },
       },
     });
 
     const response = await graphql(
-      '{ profile { links { label } skills { name } } }',
+      '{ profile { links { label } skills { name } projects { name } } }',
     );
 
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.profile).toEqual({
       links: [{ label: 'First' }, { label: 'Second' }],
       skills: [{ name: 'TypeScript' }, { name: 'GraphQL' }],
+      projects: [{ name: 'Alpha' }, { name: 'Beta' }],
     });
   });
 

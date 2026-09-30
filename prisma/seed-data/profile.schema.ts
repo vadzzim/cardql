@@ -7,13 +7,14 @@ import type { Prisma } from '../../src/generated/prisma/client.js';
 
 type ProfileRow = Omit<
   Prisma.ProfileCreateInput,
-  'slug' | 'links' | 'skills' | 'experience'
+  'slug' | 'links' | 'skills' | 'experience' | 'projects'
 > & {
   links: Omit<Prisma.LinkCreateManyInput, 'profileId' | 'position'>[];
   skills: Omit<Prisma.SkillCreateManyInput, 'profileId' | 'position'>[];
   experience: (Omit<Prisma.ExperienceCreateManyInput, 'profileId'> & {
     achievements: Prisma.AchievementCreateManyInput['description'][];
   })[];
+  projects: Omit<Prisma.ProjectCreateManyInput, 'profileId' | 'position'>[];
 };
 
 const text = z.string().trim().min(1);
@@ -22,9 +23,16 @@ function isUnique<T>(items: T[], key: (item: T) => string): boolean {
   return new Set(items.map(key)).size === items.length;
 }
 
+const httpUrl = z.url({ protocol: /^https?$/ });
+
 const linkSchema = z.strictObject({
   label: text,
-  url: z.url({ protocol: /^https?$/ }),
+  url: httpUrl,
+});
+
+const projectSchema = z.strictObject({
+  name: text,
+  url: httpUrl,
 });
 
 const skillSchema = z.strictObject({
@@ -71,6 +79,12 @@ export const seedProfileSchema = z.strictObject({
       'Skill names must be unique',
     ),
   experience: z.array(experienceSchema),
+  projects: z
+    .array(projectSchema)
+    .refine(
+      (projects) => isUnique(projects, ({ name }) => name),
+      'Project names must be unique',
+    ),
 }) satisfies z.ZodType<ProfileRow>;
 
 export type SeedProfile = z.input<typeof seedProfileSchema>;

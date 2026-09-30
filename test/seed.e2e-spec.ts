@@ -16,6 +16,10 @@ const profile = {
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/seed' },
   ],
   skills: [{ name: 'TypeScript' }, { name: 'NestJS' }],
+  projects: [
+    { name: 'cardql', url: 'https://github.com/seed/cardql' },
+    { name: 'dotfiles', url: 'https://github.com/seed/dotfiles' },
+  ],
   experience: [
     {
       company: 'Acme',
@@ -43,6 +47,7 @@ describe('seedProfile (e2e)', () => {
       include: {
         links: { orderBy: { position: 'asc' } },
         skills: { orderBy: { position: 'asc' } },
+        projects: { orderBy: { position: 'asc' } },
         experience: {
           orderBy: { startDate: 'asc' },
           include: { achievements: { orderBy: { position: 'asc' } } },
@@ -55,6 +60,11 @@ describe('seedProfile (e2e)', () => {
 
   const skillsOf = (seeded: Awaited<ReturnType<typeof readProfiles>>[number]) =>
     seeded.skills.map(({ name, position }) => ({ name, position }));
+
+  const projectsOf = (
+    seeded: Awaited<ReturnType<typeof readProfiles>>[number],
+  ) =>
+    seeded.projects.map(({ name, url, position }) => ({ name, url, position }));
 
   const experienceOf = (
     seeded: Awaited<ReturnType<typeof readProfiles>>[number],
@@ -157,6 +167,34 @@ describe('seedProfile (e2e)', () => {
     expect(await prisma.achievement.count()).toBe(1);
   });
 
+  it('creates projects in array order', async () => {
+    await seedProfile(prisma, profile);
+
+    const [seeded] = await readProfiles();
+    expect(projectsOf(seeded)).toEqual([
+      { name: 'cardql', url: 'https://github.com/seed/cardql', position: 0 },
+      {
+        name: 'dotfiles',
+        url: 'https://github.com/seed/dotfiles',
+        position: 1,
+      },
+    ]);
+  });
+
+  it('replaces projects on a repeated run', async () => {
+    await seedProfile(prisma, profile);
+    await seedProfile(prisma, {
+      ...profile,
+      projects: [{ name: 'blog', url: 'https://seed.dev/blog' }],
+    });
+
+    const [seeded] = await readProfiles();
+    expect(projectsOf(seeded)).toEqual([
+      { name: 'blog', url: 'https://seed.dev/blog', position: 0 },
+    ]);
+    expect(await prisma.project.count()).toBe(1);
+  });
+
   it('replaces links on a repeated run', async () => {
     await seedProfile(prisma, profile);
     await seedProfile(prisma, {
@@ -210,6 +248,7 @@ describe('seedProfile (e2e)', () => {
         links: undefined,
         skills: undefined,
         experience: undefined,
+        projects: undefined,
       },
     });
 

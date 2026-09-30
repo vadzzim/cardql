@@ -1,6 +1,7 @@
 import { Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { LinkModel } from './models/link.model.js';
 import { ProfileModel } from './models/profile.model.js';
+import { ProjectModel } from './models/project.model.js';
 import { SkillModel } from './models/skill.model.js';
 import { ProfileService } from './profile.service.js';
 
@@ -27,5 +28,12 @@ export class ProfileResolver {
   })
   skills(@Parent() profile: ProfileModel): Promise<SkillModel[]> {
     return this.profileService.getSkills(profile.id);
+  }
+
+  @ResolveField(() => [ProjectModel], {
+    description: 'Profile projects in display order',
+  })
+  projects(@Parent() profile: ProfileModel): Promise<ProjectModel[]> {
+    return this.profileService.getProjects(profile.id);
   }
 }
