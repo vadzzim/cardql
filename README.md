@@ -18,6 +18,8 @@ healthcheck, then the application applies migrations, seeds the profile, and sta
 NestJS. If migrations or seed fail, the application does not start.
 
 - Apollo Sandbox: http://localhost:3000/graphql
+- Health check: http://localhost:3000/health (200 `{"status":"ok"}`, 503 when
+  the database is unreachable)
 - CockroachDB UI: http://localhost:8080
 
 Use `docker compose down` to stop and remove the containers; database data stays
